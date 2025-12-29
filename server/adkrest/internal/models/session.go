@@ -17,7 +17,6 @@ package models
 import (
 	"fmt"
 	"maps"
-	"strings"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -121,44 +120,34 @@ func (s Session) Validate() error {
 	return nil
 }
 
-// PatchSessionStateDelta processes state delta directives in s.State and converts them
-// into a normalized representation. Delete directives are converted to nil values.
-// The method modifies s.State in-place.
-func PatchSessionStateDelta(session session.Session, stateDelta map[string]any) (session.Session, error) {
+// NormalizeStateDelta processes state delta directives and converts them
+// into a normalized representation suitable for the service layer.
+// Delete directives ({"$adk_state_update": "delete"}) are converted to nil values.
+// Returns a new map with normalized values.
+func NormalizeStateDelta(stateDelta map[string]any) (map[string]any, error) {
+	normalized := make(map[string]any, len(stateDelta))
 	for key, value := range stateDelta {
-		// Check for nested path keys (dot notation) which are not supported
-		if strings.Contains(key, ".") {
-			return session, fmt.Errorf("nested path keys are not supported: %q", key)
-		}
-
 		// Check if value is a directive (map with special key)
 		directive, isDirective := value.(map[string]any)
-		if !isDirective {
-			// Normal value, keep as-is
-			continue
+		if isDirective {
+			// Check if this map contains a state update directive
+			updateValue, hasDirective := directive[stateUpdateKey]
+			if hasDirective {
+				normalizedValue, err := processDirective(key, updateValue)
+				if err != nil {
+					return nil, err
+				}
+				normalized[key] = normalizedValue
+				continue
+			}
+			// else: it's a normal map value, fall through and set it as-is
 		}
 
-		// Check if this map contains a state update directive
-		updateValue, hasDirective := directive[stateUpdateKey]
-		if !hasDirective {
-			// Normal map value, keep as-is
-			continue
-		}
-
-		// Process the directive
-		normalizedValue, err := processDirective(key, updateValue)
-		if err != nil {
-			return session, err
-		}
-
-		// Update the state with the normalized value
-		err = session.State().Set(key, normalizedValue)
-		if err != nil {
-			return session, err
-		}
+		// Normal value (including normal maps): keep it directly.
+		normalized[key] = value
 	}
 
-	return session, nil
+	return normalized, nil
 }
 
 // processDirective handles a state update directive and returns the normalized value.

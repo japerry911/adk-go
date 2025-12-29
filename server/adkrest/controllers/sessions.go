@@ -174,24 +174,36 @@ func (c *SessionsAPIController) UpdateSessionHandler(rw http.ResponseWriter, req
 		http.Error(rw, "session_id parameter is required", http.StatusBadRequest)
 		return
 	}
-	storedSession, err := c.service.Get(req.Context(), &session.GetRequest{
-		AppName:   sessionID.AppName,
-		UserID:    sessionID.UserID,
-		SessionID: sessionID.ID,
+
+	patchRequest := models.PatchSessionStateDeltaRequest{}
+	if err := json.NewDecoder(req.Body).Decode(&patchRequest); err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Normalize directives (e.g. delete) to nil values for the service layer
+	normalizedDelta, err := models.NormalizeStateDelta(patchRequest.StateDelta)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Use PatchState to update state without appending an event
+	patchResp, err := c.service.PatchState(req.Context(), &session.PatchStateRequest{
+		AppName:    sessionID.AppName,
+		UserID:     sessionID.UserID,
+		SessionID:  sessionID.ID,
+		StateDelta: normalizedDelta,
 	})
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	patchSessionStateDelta := models.PatchSessionStateDeltaRequest{}
-	if err := json.NewDecoder(req.Body).Decode(&patchSessionStateDelta); err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-	session, err := models.PatchSessionStateDelta(storedSession.Session, patchSessionStateDelta.StateDelta)
+
+	respSession, err := models.FromSession(patchResp.Session)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	EncodeJSONResponse(session, http.StatusOK, rw)
+	EncodeJSONResponse(respSession, http.StatusOK, rw)
 }
