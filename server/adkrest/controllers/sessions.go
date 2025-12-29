@@ -162,3 +162,31 @@ func (c *SessionsAPIController) ListSessionsHandler(rw http.ResponseWriter, req 
 	}
 	EncodeJSONResponse(sessions, http.StatusOK, rw)
 }
+
+func (c *SessionsAPIController) UpdateSessionHandler(rw http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+	sessionID, err := models.SessionIDFromHTTPParameters(params)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if sessionID.ID == "" {
+		http.Error(rw, "session_id parameter is required", http.StatusBadRequest)
+		return
+	}
+	storedSession, err := c.service.Get(req.Context(), &session.GetRequest{
+		AppName:   sessionID.AppName,
+		UserID:    sessionID.UserID,
+		SessionID: sessionID.ID,
+	})
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	session, err := models.PatchSessionStateDelta(storedSession.Session)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	EncodeJSONResponse(session, http.StatusOK, rw)
+}
