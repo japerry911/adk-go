@@ -67,7 +67,7 @@ func (r *SessionsAPIRouter) Routes() Routes {
 			Name:        "UpdateSession",
 			Methods:     []string{http.MethodPatch},
 			Pattern:     "/apps/{app_name}/users/{user_id}/sessions/{session_id}",
-			HandlerFunc: controllers.Unimplemented,
+			HandlerFunc: r.sessionController.UpdateSessionHandler,
 		},
 	}
 }
