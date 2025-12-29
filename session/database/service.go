@@ -349,6 +349,7 @@ func (s *databaseService) AppendEvent(ctx context.Context, curSession session.Se
 	return sess.appendEvent(event)
 }
 
+// PatchState updates a session's state without appending an event
 func (s *databaseService) PatchState(ctx context.Context, req *session.PatchStateRequest) (*session.PatchStateResponse, error) {
 	appName, userID, sessionID := req.AppName, req.UserID, req.SessionID
 	if appName == "" || userID == "" || sessionID == "" {

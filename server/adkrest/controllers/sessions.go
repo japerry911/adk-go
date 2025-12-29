@@ -163,6 +163,7 @@ func (c *SessionsAPIController) ListSessionsHandler(rw http.ResponseWriter, req 
 	EncodeJSONResponse(sessions, http.StatusOK, rw)
 }
 
+// UpdateSessionHandler handles updating a session's state, specifically it performs a PATCH.
 func (c *SessionsAPIController) UpdateSessionHandler(rw http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 	sessionID, err := models.SessionIDFromHTTPParameters(params)

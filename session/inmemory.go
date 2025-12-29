@@ -235,6 +235,7 @@ func (s *inMemoryService) AppendEvent(ctx context.Context, curSession Session, e
 	return nil
 }
 
+// PatchState updates a session's state without appending an event.
 func (s *inMemoryService) PatchState(ctx context.Context, req *PatchStateRequest) (*PatchStateResponse, error) {
 	appName, userID, sessionID := req.AppName, req.UserID, req.SessionID
 	if appName == "" || userID == "" || sessionID == "" {
