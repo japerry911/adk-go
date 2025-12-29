@@ -183,7 +183,12 @@ func (c *SessionsAPIController) UpdateSessionHandler(rw http.ResponseWriter, req
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	session, err := models.PatchSessionStateDelta(storedSession.Session)
+	patchSessionStateDelta := models.PatchSessionStateDeltaRequest{}
+	if err := json.NewDecoder(req.Body).Decode(&patchSessionStateDelta); err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+	session, err := models.PatchSessionStateDelta(storedSession.Session, patchSessionStateDelta.StateDelta)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return

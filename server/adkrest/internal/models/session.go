@@ -124,10 +124,8 @@ func (s Session) Validate() error {
 // PatchSessionStateDelta processes state delta directives in s.State and converts them
 // into a normalized representation. Delete directives are converted to nil values.
 // The method modifies s.State in-place.
-func PatchSessionStateDelta(session session.Session) (session.Session, error) {
-	sessionStateAll := session.State().All()
-
-	for key, value := range sessionStateAll {
+func PatchSessionStateDelta(session session.Session, stateDelta map[string]any) (session.Session, error) {
+	for key, value := range stateDelta {
 		// Check for nested path keys (dot notation) which are not supported
 		if strings.Contains(key, ".") {
 			return session, fmt.Errorf("nested path keys are not supported: %q", key)
