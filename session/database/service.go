@@ -397,6 +397,9 @@ func (s *databaseService) PatchState(ctx context.Context, req *session.PatchStat
 
 		// Apply app state delta
 		if len(appDelta) > 0 {
+			if storageApp.State == nil {
+				storageApp.State = make(map[string]any)
+			}
 			applyDelta(storageApp.State, appDelta)
 			if err := tx.Save(&storageApp).Error; err != nil {
 				return fmt.Errorf("failed to save app state: %w", err)
@@ -405,6 +408,9 @@ func (s *databaseService) PatchState(ctx context.Context, req *session.PatchStat
 
 		// Apply user state delta
 		if len(userDelta) > 0 {
+			if storageUser.State == nil {
+				storageUser.State = make(map[string]any)
+			}
 			applyDelta(storageUser.State, userDelta)
 			if err := tx.Save(&storageUser).Error; err != nil {
 				return fmt.Errorf("failed to save user state: %w", err)
@@ -413,6 +419,9 @@ func (s *databaseService) PatchState(ctx context.Context, req *session.PatchStat
 
 		// Apply session state delta
 		if len(sessionDelta) > 0 {
+			if storageSess.State == nil {
+				storageSess.State = make(map[string]any)
+			}
 			applyDelta(storageSess.State, sessionDelta)
 		}
 
