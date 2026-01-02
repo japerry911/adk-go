@@ -205,6 +205,7 @@ func (c *SessionsAPIController) UpdateSessionHandler(rw http.ResponseWriter, req
 	}
 
 	stateUpdateEvent := &session.Event{
+		ID:           uuid.NewString(),
 		InvocationID: "p-" + uuid.NewString(),
 		Author:       "user",
 		Timestamp:    time.Now(),
